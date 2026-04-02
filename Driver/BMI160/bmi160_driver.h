@@ -4,6 +4,7 @@
 #include "stm32f10x.h"
 #include "MyI2C.h"
 #include "bmi160.h"
+#include "bmi160_reg.h"
 #include "complementary_filter.h"
 #include "mahony_filter.h"
 

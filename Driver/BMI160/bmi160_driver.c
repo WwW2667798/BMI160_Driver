@@ -150,25 +150,27 @@ s8 bmi160_driver_init(void)
     // if (com_rslt != SUCCESS)
     //     return com_rslt;
 
-    if (bmi160_dev.chip_id != 0xD1)    // BMI160标准芯片ID为0xD1
+    if (bmi160_dev.chip_id != BMI160_CHIP_ID)    // BMI160标准芯片ID为0xD1
         return E_BMI160_COMM_RES;      // ID不匹配，通信错误或设备不存在
 
     bmi160_set_command_register(0xB6); // 软件复位
     bmi160_dev.delay_msec(100);
 
     u8 reg_data = 0x09;
-    bmi160_write_reg(0x40, &reg_data, 1); // 加速度输出数据率：200Hz
+    bmi160_write_reg(BMI160_ACC_CONFIG_REG, &reg_data, 1); // 加速度输出数据率：200Hz
     reg_data = 0x0C;
-    bmi160_write_reg(0x41, &reg_data, 1); // 加速度量程：±16g
+    bmi160_write_reg(BMI160_ACC_RANGE_REG, &reg_data, 1); // 加速度量程：±16g
     bmi160_set_command_register(ACCEL_MODE_NORMAL); // 加速度工作模式：正常模式
     bmi160_dev.delay_msec(5);
 
     reg_data = 0x09;
-    bmi160_write_reg(0x42, &reg_data, 1); // 陀螺仪输出数据率：200Hz
+    bmi160_write_reg(BMI160_GYR_CONFIG_REG, &reg_data, 1); // 陀螺仪输出数据率：200Hz
     reg_data = 0x00;
-    bmi160_write_reg(0x43, &reg_data, 1); // 陀螺仪量程：±2000°/s
+    bmi160_write_reg(BMI160_GYR_RANGE_REG, &reg_data, 1); // 陀螺仪量程：±2000°/s
     bmi160_set_command_register(GYRO_MODE_NORMAL); // 陀螺仪工作模式：正常模式
     bmi160_dev.delay_msec(5);
+
+    Mahony_Init();
 
     return SUCCESS;
 }
@@ -331,7 +333,6 @@ s8 BMI160_Complementary_Update(float *pitch, float *roll, float *yaw, float dt)
  * @param  yaw    航向角（度）
  * @param  dt     采样时间间隔（秒），通常为两次调用之间的时间差
  * @return 状态码，SUCCESS (0) 表示成功，其他表示错误
- * @note   使用前需要先调用 bmi160_driver_init() 进行初始化，该函数中已包含 Mahony_Init()
  */
 s8 BMI160_Mahony_Update(float *pitch, float *roll, float *yaw, float dt)
 {

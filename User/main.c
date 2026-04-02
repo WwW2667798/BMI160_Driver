@@ -17,14 +17,11 @@ int main(void)
         while(1);
     }
 
-    Mahony_Init();
-	Delay_ms(1000);
-	
 	while(1)
 	{
 		// bmi160_read_6axis(&sensor_data);
 
-        BMI160_Complementary_Update(&pitch, &roll, &yaw, 0.01f); 
+        BMI160_Complementary_Update(&pitch, &roll, &yaw, 0.01f);
 		BMI160_Mahony_Update(&pitch1, &roll1, &yaw1, 0.01f);
 		Delay_ms(10);
 	}
