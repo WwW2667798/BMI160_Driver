@@ -11,7 +11,10 @@
 #define BMI160_GYRO_SCALE_250DPS   (250.0f / 32768.0f)
 #define BMI160_GYRO_SCALE_125DPS   (125.0f / 32768.0f)
 
+//-------------------------------------------------------------------------------------------
 struct bmi160_t bmi160_dev;
+float gyro_offset_x, gyro_offset_y, gyro_offset_z;
+static void bmi160_calibrate_gyro(void);
 
 //-------------------------------------------------------------------------------------------
 /*
@@ -172,6 +175,8 @@ s8 bmi160_driver_init(void)
 
     Mahony_Init();
 
+    bmi160_calibrate_gyro();
+
     return SUCCESS;
 }
 
@@ -283,6 +288,32 @@ static float bmi160_convert_gyro(s16 raw_gyro, u8 gyro_range)
     return gyro_dps;
 }
 
+//-------------------------------------------------------------------------------------------
+/*
+ *	@brief 	BMI160 陀螺仪校准（上电静止时调用）
+ *	@param 	None
+ *	@return None
+ */
+static void bmi160_calibrate_gyro(void)
+{
+    s16 gx_sum = 0, gy_sum = 0, gz_sum = 0;
+    struct bmi160_gyro_t gyro;
+
+    // 静止采集 200 次求平均
+    for(int i=0; i<200; i++)
+    {
+        bmi160_read_gyro(&gyro);
+        gx_sum += gyro.x;
+        gy_sum += gyro.y;
+        gz_sum += gyro.z;
+        bmi160_dev.delay_msec(5);
+    }
+
+    gyro_offset_x = gx_sum / 200.0f;
+    gyro_offset_y = gy_sum / 200.0f;
+    gyro_offset_z = gz_sum / 200.0f;
+}
+
 //-------------------------------------- 欧拉角解算函数 ----------------------------------------
 
 //-------------------------------------------------------------------------------------------
@@ -315,9 +346,9 @@ s8 BMI160_Complementary_Update(float *pitch, float *roll, float *yaw, float dt)
     ay = bmi160_convert_accel(accel.y, BMI160_ACCEL_RANGE_16G);
     az = bmi160_convert_accel(accel.z, BMI160_ACCEL_RANGE_16G);
     // 陀螺仪：±2000°/s
-    gx = bmi160_convert_gyro(gyro.x, BMI160_GYRO_RANGE_2000_DEG_SEC);
-    gy = bmi160_convert_gyro(gyro.y, BMI160_GYRO_RANGE_2000_DEG_SEC);
-    gz = bmi160_convert_gyro(gyro.z, BMI160_GYRO_RANGE_2000_DEG_SEC);
+    gx = bmi160_convert_gyro(gyro.x - gyro_offset_x, BMI160_GYRO_RANGE_2000_DEG_SEC);
+    gy = bmi160_convert_gyro(gyro.y - gyro_offset_y, BMI160_GYRO_RANGE_2000_DEG_SEC);
+    gz = bmi160_convert_gyro(gyro.z - gyro_offset_z, BMI160_GYRO_RANGE_2000_DEG_SEC);
 
     // 调用互补滤波更新
     Complementary_Update(ax, ay, az, gx, gy, gz, dt, pitch, roll, yaw);
@@ -355,10 +386,9 @@ s8 BMI160_Mahony_Update(float *pitch, float *roll, float *yaw, float dt)
     ay = bmi160_convert_accel(accel.y, BMI160_ACCEL_RANGE_16G);
     az = bmi160_convert_accel(accel.z, BMI160_ACCEL_RANGE_16G);
     // 陀螺仪：±2000°/s
-    gx = bmi160_convert_gyro(gyro.x, BMI160_GYRO_RANGE_2000_DEG_SEC);
-    gy = bmi160_convert_gyro(gyro.y, BMI160_GYRO_RANGE_2000_DEG_SEC);
-    gz = bmi160_convert_gyro(gyro.z, BMI160_GYRO_RANGE_2000_DEG_SEC);
-
+    gx = bmi160_convert_gyro(gyro.x - gyro_offset_x, BMI160_GYRO_RANGE_2000_DEG_SEC);
+    gy = bmi160_convert_gyro(gyro.y - gyro_offset_y, BMI160_GYRO_RANGE_2000_DEG_SEC);
+    gz = bmi160_convert_gyro(gyro.z - gyro_offset_z, BMI160_GYRO_RANGE_2000_DEG_SEC);
     // 调用Mahony更新函数（注意：Mahony_UpdateIMU 内部已包含四元数更新和欧拉角计算）
     Mahony_UpdateIMU(ax, ay, az, gx, gy, gz, dt, pitch, roll, yaw);
 
