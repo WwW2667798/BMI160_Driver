@@ -130,7 +130,7 @@ static s8 bmi160_i2c_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
  *	@param  None
  *	@return SUCCESS or ERROR
  */
-s8 bmi160_driver_init(void)
+static s8 bmi160_driver_init(void)
 {
     s8 com_rslt = E_BMI160_COMM_RES;
 
@@ -186,7 +186,7 @@ s8 bmi160_driver_init(void)
  *	@param  bmi160_accel_t
  *	@return bmi160_accel_t
  */
-s8 bmi160_read_accel(struct bmi160_accel_t *accel)
+static s8 bmi160_read_accel(struct bmi160_accel_t *accel)
 {
     return bmi160_read_accel_xyz(accel);
 }
@@ -197,7 +197,7 @@ s8 bmi160_read_accel(struct bmi160_accel_t *accel)
  *	@param  bmi160_gyro_t
  *	@return bmi160_gyro_t
  */
-s8 bmi160_read_gyro(struct bmi160_gyro_t *gyro)
+static s8 bmi160_read_gyro(struct bmi160_gyro_t *gyro)
 {
     return bmi160_read_gyro_xyz(gyro);
 }
@@ -325,7 +325,7 @@ static void bmi160_calibrate_gyro(void)
  * @param  dt     采样时间间隔（秒），通常与调用周期一致
  * @return 状态码，SUCCESS (0) 表示成功，其他表示错误
  */
-s8 BMI160_Complementary_Update(float *pitch, float *roll, float *yaw, float dt)
+static s8 BMI160_Complementary_Update(float *pitch, float *roll, float *yaw, float dt)
 {
     s8 result;
     struct bmi160_accel_t accel;
@@ -365,7 +365,7 @@ s8 BMI160_Complementary_Update(float *pitch, float *roll, float *yaw, float dt)
  * @param  dt     采样时间间隔（秒），通常为两次调用之间的时间差
  * @return 状态码，SUCCESS (0) 表示成功，其他表示错误
  */
-s8 BMI160_Mahony_Update(float *pitch, float *roll, float *yaw, float dt)
+static s8 BMI160_Mahony_Update(float *pitch, float *roll, float *yaw, float dt)
 {
     s8 result;
     struct bmi160_accel_t accel;
@@ -394,3 +394,15 @@ s8 BMI160_Mahony_Update(float *pitch, float *roll, float *yaw, float dt)
 
     return SUCCESS;
 }
+
+static bmi160_drvp_t do_bmi160_drvp = 
+{
+	.init = bmi160_driver_init,
+	.read_accel = bmi160_read_accel,
+	.read_gyro = bmi160_read_gyro,
+	.read_6axis = bmi160_read_6axis,
+	.Complementary_Update = BMI160_Complementary_Update,
+	.Mahony_Update = BMI160_Mahony_Update,
+};
+
+bmi160_drvp_t *bmi160_drvp = &do_bmi160_drvp;

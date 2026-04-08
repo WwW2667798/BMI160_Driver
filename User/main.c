@@ -10,7 +10,7 @@ int main(void)
 {
 //    usart_init(115200);
 
-	result = bmi160_driver_init();
+	result = bmi160_drvp->init();
     if (result != 0)
     {
 //        printf("BMI160 init failed!\n");
@@ -21,8 +21,8 @@ int main(void)
 	{
 		// bmi160_read_6axis(&sensor_data);
 
-        BMI160_Complementary_Update(&pitch, &roll, &yaw, 0.01f);
-		BMI160_Mahony_Update(&pitch1, &roll1, &yaw1, 0.01f);
+        bmi160_drvp->Complementary_Update(&pitch, &roll, &yaw, 0.01f);
+		bmi160_drvp->Mahony_Update(&pitch1, &roll1, &yaw1, 0.01f);
 		Delay_ms(10);
 	}
 }
